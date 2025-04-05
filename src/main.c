@@ -99,7 +99,7 @@ void tarefaM1(void *pvParameters) {
             xSemaphoreTake(semDepositoM1Processado, portMAX_DELAY); // Espera espaço na saída
 
             xQueueSend(queueM1Processado, &item, portMAX_DELAY);
-            printf("M1 colocou um item processado no deposito de saida.\n");
+            printf("M1 colocou um item processado no deposito de saída de M1 (queueM1Processado).\n");
         }
     }
 }
@@ -117,7 +117,7 @@ void tarefaM2(void *pvParameters) {
             xSemaphoreTake(semDepositoSaida, portMAX_DELAY); // Espera espaço na saída final
 
             xQueueSend(queueDepositoSaida, &item, portMAX_DELAY);
-            printf("M2 colocou um item na saida. Total: %d\n", item);
+            printf("M2 colocou um item processado no deposito de saída de M2 (queueM2Processado).\n");
         }
     }
 }
