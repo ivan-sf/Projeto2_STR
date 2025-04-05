@@ -9,7 +9,10 @@ QueueHandle_t queueDepositoM1;        // Entrada de M1 (1 item máximo)
 QueueHandle_t queueM1Processado;      // Saída de M1 (1 item máximo)
 QueueHandle_t queueDepositoM2;        // Entrada de M2 (1 item máximo)
 QueueHandle_t queueDepositoM3;        // Entrada de M3 (1 item máximo)
-QueueHandle_t queueDepositoSaida;     // Saída final (1 item máximo)
+QueueHandle_t queueDepositoSaida;     // Saída final (10 itens máximo)
+
+QueueHandle_t queueM2Processado;
+QueueHandle_t queueM3Processado;
 
 // Semáforos para controlar a capacidade dos depósitos
 SemaphoreHandle_t semDepositoM1;
@@ -28,41 +31,45 @@ void tarefaR1(void *pvParameters) {
     while (1) {
         if (xSemaphoreTake(semDepositoM1, portMAX_DELAY)) { // Espera até que o depósito tenha espaço
             xQueueSend(queueDepositoM1, &item, portMAX_DELAY);
-            printf("R1 colocou um item no deposito da M1.\n");
+            printf("[R1] colocou um item no deposito da M1.\n");
         }
-        vTaskDelay(pdMS_TO_TICKS(500)); // Simula tempo de transporte
+        //vTaskDelay(pdMS_TO_TICKS(700)); // Simula tempo de transporte
+        vTaskDelay(pdMS_TO_TICKS(1500));
     }
 }
 
-// Ajuste da Tarefa de R2 (pega item processado de M1 e leva para M2)
 void tarefaR2(void *pvParameters) {
     int item;
     while (1) {
         if (uxQueueSpacesAvailable(queueDepositoM2) > 0) {
-            if (xQueueReceive(queueM1Processado, &item, portMAX_DELAY)) {
-                printf("R2 pegou um item processado de M1.\n");
-                xSemaphoreGive(semDepositoM1Processado);
-                vTaskDelay(pdMS_TO_TICKS(600));
-                xQueueSend(queueDepositoM2, &item, portMAX_DELAY);
-                printf("R2 colocou um item no deposito de M2.\n");
+            if (xSemaphoreTake(semaforoM1, pdMS_TO_TICKS(100))) {
+                if (xQueueReceive(queueM1Processado, &item, pdMS_TO_TICKS(100))) {
+                    printf("[R2] Pegou item processado de M1.\n");
+                    xSemaphoreGive(semDepositoM1Processado);
+                    vTaskDelay(pdMS_TO_TICKS(700)); // Aumentado para permitir que R3 concorra
+                    xQueueSend(queueDepositoM2, &item, portMAX_DELAY);
+                    printf("[R2] Colocou item no deposito de M2.\n");
+                }
+                xSemaphoreGive(semaforoM1);
             }
         }
+        vTaskDelay(pdMS_TO_TICKS(100));
     }
 }
 
 void tarefaR3(void *pvParameters) {
     int item;
     while (1) {
-        if (xSemaphoreTake(semaforoM1, pdMS_TO_TICKS(100))) { // Controle de acesso
+        if (xSemaphoreTake(semaforoM1, pdMS_TO_TICKS(100))) {
             if (xQueueReceive(queueM1Processado, &item, pdMS_TO_TICKS(100))) {
-                printf("R3 pegou um item de M1 processado.\n");
-                vTaskDelay(pdMS_TO_TICKS(800)); // Tempo de transporte
+                printf("[R3] Pegou item processado de M1.\n");
+                vTaskDelay(pdMS_TO_TICKS(1000)); // Levemente reduzido para competir com R2
                 xQueueSend(queueDepositoM3, &item, portMAX_DELAY);
-                printf("R3 colocou um item no deposito M3.\n");
+                printf("[R3] Colocou item no deposito de M3.\n");
             }
             xSemaphoreGive(semaforoM1);
         }
-        vTaskDelay(pdMS_TO_TICKS(100));
+        vTaskDelay(pdMS_TO_TICKS(300));
     }
 }
 
@@ -70,10 +77,10 @@ void tarefaR3(void *pvParameters) {
 void tarefaR4(void *pvParameters) {
     int item;
     while (1) {
-        if (xQueueReceive(queueDepositoM2, &item, pdMS_TO_TICKS(50))) { // Tenta pegar itens de M2 primeiro
-            printf("R4 pegou um item da M2.\n");
-        } else if (xQueueReceive(queueDepositoM3, &item, pdMS_TO_TICKS(50))) { // Se não tem itens em M2, pega de M3
-            printf("R4 pegou um item da M3.\n");
+        if (xQueueReceive(queueM2Processado, &item, pdMS_TO_TICKS(50))) { // Tenta pegar itens de M2 primeiro
+            printf("[R4] pegou um item da M2.\n");
+        } else if (xQueueReceive(queueM3Processado, &item, pdMS_TO_TICKS(50))) { // Se não tem itens em M2, pega de M3
+            printf("[R4] pegou um item da M3.\n");
         } else {
             vTaskDelay(pdMS_TO_TICKS(50)); // Espera um pouco antes de tentar de novo
             continue;
@@ -81,8 +88,9 @@ void tarefaR4(void *pvParameters) {
         //vTaskDelay(pdMS_TO_TICKS(500));
         vTaskDelay(pdMS_TO_TICKS(700));
         xQueueSend(queueDepositoSaida, &item, portMAX_DELAY);
+        //xSemaphoreGive(semDepositoSaida);
         contadorItensSaida++;
-        printf("R4 colocou um item na saida. Total: %d\n", contadorItensSaida);
+        printf("[R4] colocou um item na saida. Total: %d\n", contadorItensSaida);
     }
 }
 
@@ -91,15 +99,15 @@ void tarefaM1(void *pvParameters) {
     int item;
     while (1) {
         if (xQueueReceive(queueDepositoM1, &item, portMAX_DELAY)) {
-            printf("M1 comecou a processar um item.\n");
+            printf("[M1] Comecou a processar um item.\n");
             vTaskDelay(pdMS_TO_TICKS(1500)); // Tempo de processamento
-            printf("M1 finalizou o processamento de um item.\n");
+            printf("[M1] Finalizou o processamento de um item.\n");
 
             xSemaphoreGive(semDepositoM1); // Libera o espaço do depósito de entrada
             xSemaphoreTake(semDepositoM1Processado, portMAX_DELAY); // Espera espaço na saída
 
             xQueueSend(queueM1Processado, &item, portMAX_DELAY);
-            printf("M1 colocou um item processado no deposito de saída de M1 (queueM1Processado).\n");
+            printf("[M1] Colocou um item processado no deposito de saida.\n");
         }
     }
 }
@@ -109,28 +117,30 @@ void tarefaM2(void *pvParameters) {
     int item;
     while (1) {
         if (xQueueReceive(queueDepositoM2, &item, portMAX_DELAY)) {
-            printf("M2 começou a processar um item.\n");
-            vTaskDelay(pdMS_TO_TICKS(2000)); // Tempo de processamento
-            printf("M2 finalizou o processamento de um item.\n");
+            printf("[M2] Comecou a processar um item.\n");
+            vTaskDelay(pdMS_TO_TICKS(1500)); // Tempo de processamento
+            printf("[M2] Finalizou o processamento de um item.\n");
 
             xSemaphoreGive(semDepositoM2); // Libera espaço na entrada de M2
-            xSemaphoreTake(semDepositoSaida, portMAX_DELAY); // Espera espaço na saída final
+            //xSemaphoreTake(semDepositoSaida, portMAX_DELAY); // Espera espaço na saída final
 
-            xQueueSend(queueDepositoSaida, &item, portMAX_DELAY);
-            printf("M2 colocou um item processado no deposito de saída de M2 (queueM2Processado).\n");
+            //xQueueSend(queueDepositoSaida, &item, portMAX_DELAY);
+            xQueueSend(queueM2Processado, &item, portMAX_DELAY);
+            printf("[M2] Colocou um item processado no deposito de saida.\n");
         }
     }
 }
 
-// Funcao da M3: processa itens antes de R4 pegar
 void tarefaM3(void *pvParameters) {
     int item;
     while (1) {
         if (xQueueReceive(queueDepositoM3, &item, portMAX_DELAY)) {
-            printf("M3 comecou a processar um item.\n");
-            vTaskDelay(pdMS_TO_TICKS(2000)); // Tempo de processamento
-            printf("M3 processou um item.\n");
-            xQueueSend(queueDepositoSaida, &item, portMAX_DELAY);
+            printf("[M3] Comecou a processar um item.\n");
+            vTaskDelay(pdMS_TO_TICKS(3000)); // Tempo de processamento
+            printf("[M3] Finalizou o processamento de um item.\n");
+            //xQueueSend(queueDepositoSaida, &item, portMAX_DELAY);
+            xQueueSend(queueM3Processado, &item, portMAX_DELAY);
+            printf("[M3] Colocou um item processado no deposito de saida.\n");
         }
     }
 }
@@ -141,15 +151,17 @@ void main(void) {
     queueDepositoM1 = xQueueCreate(1, sizeof(int));
     queueM1Processado = xQueueCreate(1, sizeof(int));
     queueDepositoM2 = xQueueCreate(1, sizeof(int));
-    queueDepositoSaida = xQueueCreate(1, sizeof(int));
+    queueDepositoSaida = xQueueCreate(10, sizeof(int));
     queueDepositoM3 = xQueueCreate(1, sizeof(int));
+    queueM2Processado = xQueueCreate(1, sizeof(int));
+    queueM3Processado = xQueueCreate(1, sizeof(int));
 
     if (!queueDepositoM3) {
         printf("Erro ao criar queueDepositoM3!\n");
         while (1);
     }
 
-    if (!queueDepositoM1 || !queueM1Processado || !queueDepositoM2 || !queueDepositoSaida) {
+    if (!queueDepositoM1 || !queueM1Processado || !queueDepositoM2 || !queueDepositoSaida || !queueM2Processado || !queueM3Processado) {
         printf("Erro ao criar filas!\n");
         while (1);
     }
@@ -159,7 +171,7 @@ void main(void) {
     semDepositoM1Processado = xSemaphoreCreateBinary();
     semDepositoM2 = xSemaphoreCreateBinary();
     semDepositoSaida = xSemaphoreCreateBinary();
-    semaforoM1 = xSemaphoreCreateBinary();
+    semaforoM1 = xSemaphoreCreateMutex();
 
     if (!semDepositoM1 || !semDepositoM1Processado || !semDepositoM2 || !semDepositoSaida) {
         printf("Erro ao criar semáforos!\n");
@@ -182,6 +194,7 @@ void main(void) {
     xTaskCreate(tarefaR4, "R4", configMINIMAL_STACK_SIZE, NULL, 1, NULL);
     
     vTaskStartScheduler();
+    
     while (1){
         
     }
