@@ -51,7 +51,7 @@ void tarefaR2(void *pvParameters) {
                 if (xQueueReceive(queueM1Processado, &item, pdMS_TO_TICKS(100))) {
                     printf("[R2] Pegou item processado de M1.\n");
                     xSemaphoreGive(semDepositoM1Processado);
-                    vTaskDelay(pdMS_TO_TICKS(700)); // Aumentado para permitir que R3 concorra
+                    vTaskDelay(pdMS_TO_TICKS(1000)); // Aumentado para permitir que R3 concorra
                     xQueueSend(queueDepositoM2, &item, portMAX_DELAY);
                     printf("[R2] Colocou item no deposito de M2.\n");
                 }
@@ -68,6 +68,7 @@ void tarefaR3(void *pvParameters) {
         if (xSemaphoreTake(semaforoM1, pdMS_TO_TICKS(100))) {
             if (xQueueReceive(queueM1Processado, &item, pdMS_TO_TICKS(100))) {
                 printf("[R3] Pegou item processado de M1.\n");
+                xSemaphoreGive(semDepositoM1Processado);
                 vTaskDelay(pdMS_TO_TICKS(1000)); // Levemente reduzido para competir com R2
                 xQueueSend(queueDepositoM3, &item, portMAX_DELAY);
                 printf("[R3] Colocou item no deposito de M3.\n");
@@ -84,8 +85,10 @@ void tarefaR4(void *pvParameters) {
     while (1) {
         if (xQueueReceive(queueM2Processado, &item, pdMS_TO_TICKS(50))) { // Tenta pegar itens de M2 primeiro
             printf("[R4] pegou um item da M2.\n");
+            xSemaphoreGive(semDepositoM2Processado);
         } else if (xQueueReceive(queueM3Processado, &item, pdMS_TO_TICKS(50))) { // Se não tem itens em M2, pega de M3
             printf("[R4] pegou um item da M3.\n");
+            xSemaphoreGive(semDepositoM3Processado);
         } else {
             vTaskDelay(pdMS_TO_TICKS(50)); // Espera um pouco antes de tentar de novo
             continue;
