@@ -50,14 +50,14 @@ void tarefaR2(void *pvParameters) {
                 if (xQueueReceive(queueM1Processado, &item, pdMS_TO_TICKS(100))) {
                     printf("[R2] Pegou item processado de M1.\n");
                     xSemaphoreGive(semDepositoM1Processado);
-                    vTaskDelay(pdMS_TO_TICKS(700)); // Tempo de transporte
+                    vTaskDelay(pdMS_TO_TICKS(1000)); // Tempo de transporte
                     xQueueSend(queueDepositoM2, &item, portMAX_DELAY);
                     printf("[R2] Colocou item no deposito de M2.\n");
                 }
                 xSemaphoreGive(semaforoM1);
             }
         }
-        //vTaskDelay(pdMS_TO_TICKS(100));
+        vTaskDelay(pdMS_TO_TICKS(100));
     }
 }
 
@@ -75,7 +75,7 @@ void tarefaR3(void *pvParameters) {
             }
             xSemaphoreGive(semaforoM1);
         }
-        //vTaskDelay(pdMS_TO_TICKS(300));
+        vTaskDelay(pdMS_TO_TICKS(300));
     }
 }
 
