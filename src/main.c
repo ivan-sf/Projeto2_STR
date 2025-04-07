@@ -13,8 +13,6 @@ QueueHandle_t queueM1Processado;      // Saída de M1 (1 item máximo)
 QueueHandle_t queueM2Processado;      // Saída de M2 (1 item máximo)
 QueueHandle_t queueM3Processado;      // Saída de M3 (1 item máximo)
 
-QueueHandle_t queueDepositoSaida;     // Saída final (10 itens máximo - por enquanto)
-
 // Semáforos para controlar a capacidade dos depósitos
 SemaphoreHandle_t semDepositoM1;
 SemaphoreHandle_t semDepositoM1Processado;
@@ -94,7 +92,6 @@ void tarefaR4(void *pvParameters) {
             continue;
         }
         vTaskDelay(pdMS_TO_TICKS(700));
-        xQueueSend(queueDepositoSaida, &item, portMAX_DELAY);
         contadorItensSaida++;
         printf("[R4] colocou um item na saida. Total: %d\n", contadorItensSaida);
     }
@@ -166,9 +163,7 @@ void main(void) {
     queueDepositoM3 = xQueueCreate(1, sizeof(int));
     queueM3Processado = xQueueCreate(1, sizeof(int));
 
-    queueDepositoSaida = xQueueCreate(10, sizeof(int));
-
-    if (!queueDepositoM1 || !queueM1Processado || !queueDepositoM2 || !queueM2Processado || !queueDepositoM3 || !queueM3Processado || !queueDepositoSaida) {
+    if (!queueDepositoM1 || !queueM1Processado || !queueDepositoM2 || !queueM2Processado || !queueDepositoM3 || !queueM3Processado) {
         printf("Erro ao criar as filas!\n");
         while (1);
     }
