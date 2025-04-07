@@ -6,6 +6,9 @@
 
 /*
     - Não há limites nos depósitos de entrada e de saída da célula
+    - Usa filas para armazenar os itens nos depósitos de entrada e saída de cada máquina
+    - Usa semáforos para controlar a quantidade de itens nos depósitos de entrada e saída de cada máquina
+    - Usa semáforo para controlar o acesso de R2 e R3 ao depósito de saída de M1
     - Não se faz necessário uso de semáforos para controlar a entrada e saída da célula
     - Não se faz necessário uso de filas para a entrada e a saída da célula
 */
