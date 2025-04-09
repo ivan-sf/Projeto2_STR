@@ -36,16 +36,19 @@ SemaphoreHandle_t semDepositoM3Processado;
 SemaphoreHandle_t semaforoM1;
 
 int contadorItensSaida = 0; // Apenas para debug
+int contadorItensEntrada = 0; // Apenas para debug
 
 // Função de R1: transporta itens do depósito de entrada da célula para a M1
 void tarefaR1(void *pvParameters) {
-    int item = 0;
+    int item;
     while (1) {
         if (xSemaphoreTake(semDepositoM1, portMAX_DELAY)) { // Espera até que o depósito tenha espaço
+            contadorItensEntrada++;
+            printf("[R1] Pegou um item do deposito de entrada da celula. Item num: %d\n", contadorItensEntrada);
+            vTaskDelay(pdMS_TO_TICKS(700)); // Tempo de transporte
             xQueueSend(queueDepositoM1, &item, portMAX_DELAY); // Envia para o depósito de entrada de M1
-            printf("[R1] colocou um item no deposito da M1.\n");
+            printf("[R1] Colocou um item no deposito da M1.\n");
         }
-        vTaskDelay(pdMS_TO_TICKS(700)); // Tempo de transporte
     }
 }
 
@@ -72,36 +75,67 @@ void tarefaR2(void *pvParameters) {
 void tarefaR3(void *pvParameters) {
     int item;
     while (1) {
-        if (xSemaphoreTake(semaforoM1, pdMS_TO_TICKS(100))) {
-            if (xQueueReceive(queueM1Processado, &item, pdMS_TO_TICKS(100))) {
-                printf("[R3] Pegou item processado de M1.\n");
-                xSemaphoreGive(semDepositoM1Processado); // Libera o depósito de saída de M1
-                vTaskDelay(pdMS_TO_TICKS(1000)); // Tempo de transporte
-                xQueueSend(queueDepositoM3, &item, portMAX_DELAY); // Envia para o depósito de entrada de M3
-                printf("[R3] Colocou item no deposito de M3.\n");
+        if (uxQueueSpacesAvailable(queueDepositoM3) > 0) {
+            if (xSemaphoreTake(semaforoM1, pdMS_TO_TICKS(100))) {
+                if (xQueueReceive(queueM1Processado, &item, pdMS_TO_TICKS(100))) {
+                    printf("[R3] Pegou item processado de M1.\n");
+                    xSemaphoreGive(semDepositoM1Processado); // Libera o depósito de saída de M1
+                    vTaskDelay(pdMS_TO_TICKS(1000)); // Tempo de transporte
+                    xQueueSend(queueDepositoM3, &item, portMAX_DELAY); // Envia para o depósito de entrada de M3
+                    printf("[R3] Colocou item no deposito de M3.\n");
+                }
+                xSemaphoreGive(semaforoM1);
             }
-            xSemaphoreGive(semaforoM1);
         }
     }
 }
 
 // Função do R4: transporta itens ou de M2 ou de M3 para a saída da célula
-void tarefaR4(void *pvParameters) {
+/*void tarefaR4(void *pvParameters) {
     int item;
     while (1) {
         if (xQueueReceive(queueM2Processado, &item, pdMS_TO_TICKS(50))) { // Tenta pegar itens de M2 primeiro
-            printf("[R4] pegou um item da M2.\n");
+            printf("[R4] Pegou um item da M2.\n");
             xSemaphoreGive(semDepositoM2Processado); // Libera o depósito de sáida de M2
         } else if (xQueueReceive(queueM3Processado, &item, pdMS_TO_TICKS(50))) { // Se não tem itens em M2, pega de M3
-            printf("[R4] pegou um item da M3.\n");
+            printf("[R4] Pegou um item da M3.\n");
             xSemaphoreGive(semDepositoM3Processado); // Libera o depósito de saída de M3
         } else {
             vTaskDelay(pdMS_TO_TICKS(50)); // Espera um pouco antes de tentar de novo
             continue;
         }
+
         vTaskDelay(pdMS_TO_TICKS(700)); // Tempo de transporte
         contadorItensSaida++;
-        printf("[R4] colocou um item na saida. Total: %d\n", contadorItensSaida);
+        printf("[R4] Colocou um item na saida da celula. Item num: %d\n", contadorItensSaida);
+    }
+}*/
+
+void tarefaR4(void *pvParameters) {
+    int item;
+    while (1) {
+        BaseType_t M2processado = xQueueReceive(queueM2Processado, &item, pdMS_TO_TICKS(50));
+        BaseType_t M3processado = xQueueReceive(queueM3Processado, &item, pdMS_TO_TICKS(50));
+
+        if (M2processado) {
+            printf("[R4] Pegou um item da M2.\n");
+            xSemaphoreGive(semDepositoM2Processado);
+            vTaskDelay(pdMS_TO_TICKS(700));
+            contadorItensSaida++;
+            printf("[R4] Colocou um item na saida da celular. Item num: %d\n", contadorItensSaida);
+        }
+
+        if (M3processado) {
+            printf("[R4] Pegou um item da M3.\n");
+            xSemaphoreGive(semDepositoM3Processado);
+            vTaskDelay(pdMS_TO_TICKS(700));
+            contadorItensSaida++;
+            printf("[R4] Colocou um item na saida da celula. Item num: %d\n", contadorItensSaida);
+        }
+
+        if (!M2processado && !M3processado) {
+            vTaskDelay(pdMS_TO_TICKS(50));
+        }
     }
 }
 
