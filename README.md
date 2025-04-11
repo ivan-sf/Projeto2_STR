@@ -1,5 +1,4 @@
 # Projeto STR 2024.2 — Simulação de Célula de Manufatura com FreeRTOS
-# Projeto de Controle de Elevador Concorrente
 
 ## Descrição
 
@@ -115,12 +114,6 @@ ou
  - Clique direito com o mouse em Solução 'WIN32'
  - Redirecionar solução
  - Altere a versão do SDK
-## Análise de Sincronização
-O sistema utiliza dois semáforos:
-
-- semFila (binário): Controla acesso à fila de chamadas.
-- semChamadas (contador): Notifica o elevador sobre novas requisições.
-
 
 ## Contribuições
 Contribuições são bem-vindas! Siga os passos:
