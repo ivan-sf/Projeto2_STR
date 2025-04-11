@@ -5,7 +5,7 @@
 Este projeto implementa a simulação de uma célula de manufatura utilizando o sistema operacional de tempo real **FreeRTOS**, com o objetivo de modelar o funcionamento de robôs e máquinas em um ambiente de produção industrial.
 ## Vídeo de Demonstração
 Assista à demonstração e explicação do projeto no YouTube:  
-https://youtu.be/gutfN_xmWy4
+https://youtu.be/mWQ_yvn3v1g
 
 ## Funcionalidades
 
