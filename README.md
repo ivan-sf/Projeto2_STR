@@ -44,42 +44,37 @@ https://youtu.be/gutfN_xmWy4
 ## Exemplo de Execução
 
 ```plaintext
-[R1] colocou um item no deposito da M1.
-[M1] Comecou a processar um item.
-[M1] Finalizou o processamento de um item.
-[M1] Colocou um item processado no deposito de saida.
-[R2] Pegou item processado de M1.
-[R1] colocou um item no deposito da M1.
-[M1] Comecou a processar um item.
-[R2] Colocou item no deposito de M2.
-[M2] Comecou a processar um item.
-[M1] Finalizou o processamento de um item.
-[M1] Colocou um item processado no deposito de saida.
-[R1] colocou um item no deposito da M1.
-[R3] Pegou item processado de M1.
-[M1] Comecou a processar um item.
-[M2] Finalizou o processamento de um item.
-[M2] Colocou um item processado no deposito de saida.
-[R4] pegou um item da M2.
-[R3] Colocou item no deposito de M3.
-[M3] Comecou a processar um item.
-[R4] colocou um item na saida. Total: 1
-[M1] Finalizou o processamento de um item.
-[M1] Colocou um item processado no deposito de saida.
-[R3] Pegou item processado de M1.
-[R1] colocou um item no deposito da M1.
-[M1] Comecou a processar um item.
-[R3] Colocou item no deposito de M3.
-[M1] Finalizou o processamento de um item.
-[M1] Colocou um item processado no deposito de saida.
-[R3] Pegou item processado de M1.
-[R1] colocou um item no deposito da M1.
-[M1] Comecou a processar um item.
-[M3] Finalizou o processamento de um item.
-[M3] Colocou um item processado no deposito de saida.
-[M3] Comecou a processar um item.
-[R3] Colocou item no deposito de M3.
-[R4] pegou um item da M3.
+(1 ms) [R1] Pegou o item #1 do deposito de entrada da celula.
+(701 ms) [R1] Colocou o item #1 no deposito da M1.
+(701 ms) [M1] Comecou a processar o item #1.
+(2201 ms) [M1] Finalizou o processamento do item #1.
+(2201 ms) [M1] Colocou o item #1 processado no deposito de saida.
+(2201 ms) [R2] Pegou o item #1 processado de M1.
+(2201 ms) [R1] Pegou o item #2 do deposito de entrada da celula.
+(2901 ms) [R2] Colocou o item #1 no deposito de M2.
+(2902 ms) [R1] Colocou o item #2 no deposito da M1.
+(2902 ms) [M2] Comecou a processar o item #1.
+(2902 ms) [M1] Comecou a processar o item #2.
+(4402 ms) [M2] Finalizou o processamento do item #1.
+(4402 ms) [M2] Colocou o item #1 processado no deposito de saida.
+(4402 ms) [M1] Finalizou o processamento do item #2.
+(4402 ms) [M1] Colocou o item #2 processado no deposito de saida.
+(4402 ms) [R1] Pegou o item #3 do deposito de entrada da celula.
+(4402 ms) [R3] Pegou o item #2 processado de M1.
+(4452 ms) [R4] Pegou o item #1 da M2.
+(5102 ms) [R1] Colocou o item #3 no deposito da M1.
+(5102 ms) [M1] Comecou a processar o item #3.
+(5152 ms) [R4] Colocou o item #1 na saida da celula.
+(5402 ms) [R3] Colocou o item #2 no deposito de M3.
+(5403 ms) [M3] Comecou a processar o item #2.
+(6602 ms) [M1] Finalizou o processamento do item #3.
+(6602 ms) [M1] Colocou o item #3 processado no deposito de saida.
+(6602 ms) [R1] Pegou o item #4 do deposito de entrada da celula.
+(6602 ms) [R2] Pegou o item #3 processado de M1.
+(7302 ms) [R1] Colocou o item #4 no deposito da M1.
+(7302 ms) [R2] Colocou o item #3 no deposito de M2.
+(7303 ms) [M1] Comecou a processar o item #4.
+(7303 ms) [M2] Comecou a processar o item #3.
 ...
 ```
 
